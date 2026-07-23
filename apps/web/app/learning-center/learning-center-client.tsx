@@ -5,12 +5,12 @@ import { Clock } from 'lucide-react';
 
 import { FilterChip } from '@/components/filter-chip';
 import { LinkCard } from '@/components/link-card';
-import { CATEGORIES, LEARN_ITEMS, TYPES, getTypeIcon } from './learn';
+import { CATEGORIES, LEARN_ITEMS, TYPES, getTypeIcon } from './learning-center';
 
 type CategoryFilter = (typeof CATEGORIES)[number];
 type TypeFilter = (typeof TYPES)[number];
 
-export const LearnClient = () => {
+export const LearningCenterClient = () => {
   const [category, setCategory] = useState<CategoryFilter>('全部');
   const [type, setType] = useState<TypeFilter>('全部');
   const [, startTransition] = useTransition();
@@ -74,7 +74,7 @@ export const LearnClient = () => {
           {filteredItems.map((item) => (
             <LinkCard
               key={item.id}
-              href={`/learn/${item.id}`}
+              href={`/learning-center/${item.id}`}
               icon={getTypeIcon(item.type)}
               iconClassName="bg-muted text-muted-foreground shadow-none"
               title={item.title}

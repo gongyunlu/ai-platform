@@ -18,7 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: '首页', href: '/' },
   { label: 'Agent', href: '/agent' },
   { label: 'SkillHub', href: '/skill-hub' },
-  { label: '学习中心', href: '/learn' },
+  { label: '学习中心', href: '/learning-center' },
 ];
 
 export const SiteHeader = () => {

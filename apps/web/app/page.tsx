@@ -72,7 +72,7 @@ const ENTRIES: EntryCard[] = [
   {
     title: '学习中心',
     desc: '操作说明、使用案例、视频教程',
-    href: '/learn',
+    href: '/learning-center',
     icon: BookOpen,
     iconClassName: 'bg-linear-to-br from-orange-500 to-amber-600',
   },

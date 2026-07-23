@@ -5,7 +5,7 @@ import { Link } from '@/components/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { getLearnById } from '../learn';
+import { getLearnById } from '../learning-center';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -21,7 +21,10 @@ export default async function LearnDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
       <nav className="mb-6 flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/learn" className="inline-flex items-center gap-1 hover:text-foreground">
+        <Link
+          href="/learning-center"
+          className="inline-flex items-center gap-1 hover:text-foreground"
+        >
           <ChevronLeft className="size-4" />
           学习中心
         </Link>
