@@ -31,9 +31,17 @@
     "typescript": "^6.0.3"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+    "apps/web/**/*.{ts,tsx,js,jsx,mjs,cjs}": [
       "prettier --write",
-      "eslint --fix"
+      "pnpm --filter @ai-platform/web exec eslint --fix"
+    ],
+    "apps/api/**/*.{ts,js,mjs,cjs}": [
+      "prettier --write",
+      "pnpm --filter @ai-platform/api exec eslint --fix"
+    ],
+    "packages/shared/**/*.{ts,mjs}": [
+      "prettier --write",
+      "pnpm --filter @ai-platform/shared exec eslint --fix"
     ],
     "*.{json,md,yml,yaml}": [
       "prettier --write"
