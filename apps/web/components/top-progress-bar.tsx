@@ -9,11 +9,11 @@ type Phase = 'idle' | 'loading' | 'done';
 const PHASE_CLASS: Record<Phase, string> = {
   idle: 'scale-x-0 opacity-0',
   loading:
-    'scale-x-90 opacity-100 transition-transform duration-[8000ms] ease-[cubic-bezier(0,0.7,0.4,1)]',
+    'scale-x-90 opacity-100 transition-transform duration-[3000ms] ease-[cubic-bezier(0,0.7,0.4,1)]',
   done: 'scale-x-100 opacity-0 transition-[transform,opacity] duration-200 ease-out',
 };
 
-export function TopProgressBar() {
+export const TopProgressBar = () => {
   const { active } = useLinkProgress();
   const [phase, setPhase] = useState<Phase>('idle');
 
@@ -41,4 +41,4 @@ export function TopProgressBar() {
       />
     </div>
   );
-}
+};

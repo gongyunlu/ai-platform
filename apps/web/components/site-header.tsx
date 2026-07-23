@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
-import { Sparkles, User } from "lucide-react";
+import { usePathname } from 'next/navigation';
+import { Sparkles, User } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Link } from "@/components/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { IconBadge } from '@/components/icon-badge';
+import { Link } from '@/components/link';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 type NavItem = {
   label: string;
@@ -14,42 +15,39 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "首页", href: "/" },
-  { label: "Agent", href: "/agent" },
-  { label: "SkillHub", href: "/skill-hub" },
-  { label: "学习中心", href: "/learn" },
+  { label: '首页', href: '/' },
+  { label: 'Agent', href: '/agent' },
+  { label: 'SkillHub', href: '/skill-hub' },
+  { label: '学习中心', href: '/learn' },
 ];
 
-export function SiteHeader() {
+export const SiteHeader = () => {
   const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm">
-            <Sparkles className="size-4" />
-          </span>
-          <span className="text-base font-semibold tracking-tight">
-            AI Platform
-          </span>
+          <IconBadge
+            icon={Sparkles}
+            size="sm"
+            className="bg-linear-to-br from-indigo-500 to-purple-600"
+          />
+          <span className="text-base font-semibold tracking-tight">AI Platform</span>
         </Link>
 
         <nav className="hidden items-center gap-1 rounded-full bg-transparent p-1 md:flex">
           {NAV_ITEMS.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
+            const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
                   active
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 {item.label}
@@ -60,17 +58,22 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button
-            className="rounded-full bg-foreground px-4 text-background hover:bg-foreground/90"
-            size="sm"
-          >
-            发布 Skill
-          </Button>
+          {/* 走"Link 包 Button"而不是 Button 的 render prop：Base UI Button 的 render 会用外层
+              克隆并注入 children，导致包装 Link 内部的 <LinkStatusReporter/> 挂载点被丢弃、
+              进度条不会触发。这里保持进度条一致的交互反馈。 */}
+          <Link href="/publish-skill">
+            <Button
+              className="rounded-full bg-foreground px-4 text-background hover:bg-foreground/90"
+              size="sm"
+            >
+              发布 Skill
+            </Button>
+          </Link>
           <Button
             variant="ghost"
             size="icon"
             aria-label="用户"
-            className="rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:from-indigo-500/90 hover:to-purple-600/90"
+            className="rounded-full bg-linear-to-br from-indigo-500 to-purple-600 text-white hover:from-indigo-500/90 hover:to-purple-600/90"
           >
             <User className="size-4" />
           </Button>
@@ -78,4 +81,4 @@ export function SiteHeader() {
       </div>
     </header>
   );
-}
+};

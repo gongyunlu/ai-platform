@@ -8,9 +8,11 @@ import {
   Play,
   Search,
   Wrench,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { Link } from "@/components/link";
+import { IconBadge } from '@/components/icon-badge';
+import { Link } from '@/components/link';
+import { Button } from '@/components/ui/button';
 
 type Scenario = {
   label: string;
@@ -18,22 +20,31 @@ type Scenario = {
 };
 
 const SCENARIOS_ROW_1: Scenario[] = [
-  { label: "写代码", icon: Code2 },
-  { label: "写周报", icon: FileText },
-  { label: "做汇报", icon: BarChart3 },
-  { label: "数据分析", icon: BarChart3 },
-  { label: "找内部 Skill", icon: Search },
-  { label: "安装 Codex", icon: Wrench },
-  { label: "测试用例", icon: FileText },
+  { label: '写代码', icon: Code2 },
+  { label: '写周报', icon: FileText },
+  { label: '做汇报', icon: BarChart3 },
+  { label: '数据分析', icon: BarChart3 },
+  { label: '找内部 Skill', icon: Search },
+  { label: '安装 Codex', icon: Wrench },
+  { label: '测试用例', icon: FileText },
 ];
 
 const SCENARIOS_ROW_2: Scenario[] = [
-  { label: "看教程", icon: Play },
-  { label: "需求拆解", icon: Puzzle },
-  { label: "客服话术", icon: Headphones },
+  { label: '看教程', icon: Play },
+  { label: '需求拆解', icon: Puzzle },
+  { label: '客服话术', icon: Headphones },
 ];
 
-const RECOMMEND_PATHS = ["写代码作战页", "搜索内部 Skill", "一键安装 Agent"];
+type RecommendPath = {
+  label: string;
+  primary?: boolean;
+};
+
+const RECOMMEND_PATHS: RecommendPath[] = [
+  { label: '写代码作战页', primary: true },
+  { label: '搜索内部 Skill' },
+  { label: '一键安装 Agent' },
+];
 
 type EntryCard = {
   title: string;
@@ -45,39 +56,40 @@ type EntryCard = {
 
 const ENTRIES: EntryCard[] = [
   {
-    title: "Agent",
-    desc: "Codex 与 Claude Code 的一键安装配置",
-    href: "/agent",
+    title: 'Agent',
+    desc: 'Codex 与 Claude Code 的一键安装配置',
+    href: '/agent',
     icon: Wrench,
-    iconClassName: "bg-gradient-to-br from-sky-500 to-blue-600",
+    iconClassName: 'bg-linear-to-br from-sky-500 to-blue-600',
   },
   {
-    title: "SkillHub",
-    desc: "内部 Skill 搜索、安装使用、发布更新",
-    href: "/skill-hub",
+    title: 'SkillHub',
+    desc: '内部 Skill 搜索、安装使用、发布更新',
+    href: '/skill-hub',
     icon: Search,
-    iconClassName: "bg-gradient-to-br from-fuchsia-500 to-pink-600",
+    iconClassName: 'bg-linear-to-br from-fuchsia-500 to-pink-600',
   },
   {
-    title: "学习中心",
-    desc: "操作说明、使用案例、视频教程",
-    href: "/learn",
+    title: '学习中心',
+    desc: '操作说明、使用案例、视频教程',
+    href: '/learn',
     icon: BookOpen,
-    iconClassName: "bg-gradient-to-br from-orange-500 to-amber-600",
+    iconClassName: 'bg-linear-to-br from-orange-500 to-amber-600',
   },
 ];
 
-function ScenarioChip({ icon: Icon, label }: Scenario) {
+const ScenarioChip = ({ icon: Icon, label }: Scenario) => {
   return (
-    <button
+    <Button
       type="button"
-      className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2 text-sm font-medium text-foreground shadow-xs transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-sm"
+      variant="outline"
+      className="h-auto rounded-full px-4 py-2 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm"
     >
-      <Icon className="size-4 text-muted-foreground" />
+      <Icon className="text-muted-foreground" />
       {label}
-    </button>
+    </Button>
   );
-}
+};
 
 export default function HomePage() {
   return (
@@ -87,8 +99,7 @@ export default function HomePage() {
           从工作场景进入公司 AI 能力地图
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground">
-          选择您的工作场景，平台会聚合推荐对应的 Agent、内部 Skill、教程和案例，
-          帮助您快速上手
+          选择您的工作场景，平台会聚合推荐对应的 Agent、内部 Skill、教程和案例， 帮助您快速上手
         </p>
 
         <div className="mt-12 flex w-full flex-col items-center gap-3">
@@ -109,16 +120,16 @@ export default function HomePage() {
             推荐开始路径
           </span>
           <div className="flex flex-wrap justify-center gap-3">
-            {RECOMMEND_PATHS.map((path, index) => (
+            {RECOMMEND_PATHS.map((path) => (
               <span
-                key={path}
+                key={path.label}
                 className={
-                  index === 0
-                    ? "rounded-full bg-muted px-4 py-1.5 text-sm text-foreground"
-                    : "rounded-full bg-muted/60 px-4 py-1.5 text-sm text-muted-foreground"
+                  path.primary
+                    ? 'rounded-full bg-muted px-4 py-1.5 text-sm text-foreground'
+                    : 'rounded-full bg-muted/60 px-4 py-1.5 text-sm text-muted-foreground'
                 }
               >
-                {path}
+                {path.label}
               </span>
             ))}
           </div>
@@ -130,16 +141,10 @@ export default function HomePage() {
           <Link
             key={entry.title}
             href={entry.href}
-            className="group rounded-2xl border border-border/70 bg-card p-6 shadow-xs transition-all hover:-translate-y-1 hover:shadow-lg"
+            className="group rounded-2xl bg-card p-6 ring-1 ring-foreground/10 shadow-xs transition-all hover:-translate-y-1 hover:ring-foreground/20 hover:shadow-lg"
           >
-            <div
-              className={`inline-flex size-12 items-center justify-center rounded-xl text-white shadow-sm ${entry.iconClassName}`}
-            >
-              <entry.icon className="size-6" />
-            </div>
-            <h3 className="mt-16 text-xl font-semibold tracking-tight">
-              {entry.title}
-            </h3>
+            <IconBadge icon={entry.icon} size="lg" className={entry.iconClassName} />
+            <h3 className="mt-16 text-xl font-semibold tracking-tight">{entry.title}</h3>
             <p className="mt-2 text-sm text-muted-foreground">{entry.desc}</p>
           </Link>
         ))}

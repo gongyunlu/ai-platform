@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   useDeferredValue,
@@ -8,19 +8,17 @@ import {
   useState,
   useTransition,
   type MouseEvent,
-} from "react";
-import { Search } from "lucide-react";
+} from 'react';
+import { Search } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
-import { useFixedSizeVirtualList } from "@/hooks/use-fixed-size-virtual-list";
-import {
-  AGENTS,
-  CATEGORIES,
-  SKILLS,
-  type Skill,
-  type SkillAgent,
-  type SkillCategory,
-} from "./skills";
+import { cn } from '@/lib/utils';
+import { Link } from '@/components/link';
+import { IconBadge } from '@/components/icon-badge';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useFixedSizeVirtualList } from '@/hooks/use-fixed-size-virtual-list';
+import { AGENTS, CATEGORIES, SKILLS, type Skill } from './skills';
 
 type CategoryFilter = (typeof CATEGORIES)[number];
 type AgentFilter = (typeof AGENTS)[number];
@@ -30,16 +28,16 @@ const CARD_ROW_HEIGHT = 208;
 // 分页步长：初始渲染多少、每次滚到底再追加多少
 const PAGE_SIZE = 60;
 
-function getColumnsByWidth(width: number): number {
+const getColumnsByWidth = (width: number): number => {
   if (width < 640) return 1;
   if (width < 1024) return 2;
   return 3;
-}
+};
 
-export function SkillHubClient() {
-  const [rawKeyword, setRawKeyword] = useState("");
-  const [category, setCategory] = useState<CategoryFilter>("全部");
-  const [agent, setAgent] = useState<AgentFilter>("全部");
+export const SkillHubClient = () => {
+  const [rawKeyword, setRawKeyword] = useState('');
+  const [category, setCategory] = useState<CategoryFilter>('全部');
+  const [agent, setAgent] = useState<AgentFilter>('全部');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   // 用于探测 filteredSkills 变化 → 在 render 中同步重置分页
   // （React 官方推荐的"在渲染时更新 state"模式，避免额外的 effect）
@@ -68,13 +66,10 @@ export function SkillHubClient() {
   const filteredSkills = useMemo(() => {
     const kw = deferredKeyword.trim().toLowerCase();
     return SKILLS.filter((skill) => {
-      if (category !== "全部" && skill.category !== category) return false;
-      if (agent !== "全部" && skill.agent !== agent) return false;
+      if (category !== '全部' && skill.category !== category) return false;
+      if (agent !== '全部' && skill.agent !== agent) return false;
       if (!kw) return true;
-      return (
-        skill.title.toLowerCase().includes(kw) ||
-        skill.desc.toLowerCase().includes(kw)
-      );
+      return skill.title.toLowerCase().includes(kw) || skill.desc.toLowerCase().includes(kw);
     });
   }, [deferredKeyword, category, agent]);
 
@@ -100,6 +95,14 @@ export function SkillHubClient() {
     innerRef,
   });
 
+  // 用 ref 存最新 filteredSkills，避免 IntersectionObserver 闭包读到旧引用；
+  // effect 依赖仅锁 hasMore，防止等长切换（例如两组筛选结果都是 200）时观察者不重建。
+  // ref 只能在 effect 里写（React Compiler 规则），不能在 render 中直接赋值。
+  const filteredSkillsRef = useRef(filteredSkills);
+  useEffect(() => {
+    filteredSkillsRef.current = filteredSkills;
+  }, [filteredSkills]);
+
   // 滚动到"哨兵"时追加下一页；使用 IntersectionObserver 挂在 window 视口上
   useEffect(() => {
     const el = sentinelRef.current;
@@ -110,17 +113,17 @@ export function SkillHubClient() {
           if (entry.isIntersecting) {
             startTransition(() => {
               setVisibleCount((prev) =>
-                Math.min(prev + PAGE_SIZE, filteredSkills.length),
+                Math.min(prev + PAGE_SIZE, filteredSkillsRef.current.length),
               );
             });
           }
         }
       },
-      { rootMargin: "600px 0px" }, // 提前 600px 触发，感觉更顺
+      { rootMargin: '600px 0px' }, // 提前 600px 触发，感觉更顺
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, filteredSkills.length]);
+  }, [hasMore]);
 
   const handleCategoryChange = (value: CategoryFilter) => {
     startTransition(() => setCategory(value));
@@ -132,9 +135,7 @@ export function SkillHubClient() {
   return (
     <section className="mx-auto w-full max-w-6xl px-6 pt-12 pb-24">
       <header>
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-          SkillHub
-        </h1>
+        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">SkillHub</h1>
         <p className="mt-3 text-base text-muted-foreground">
           搜索、安装和使用内部 Skill，提升工作效率
         </p>
@@ -142,12 +143,12 @@ export function SkillHubClient() {
 
       <div className="relative mt-10">
         <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
-        <input
+        <Input
           type="search"
           value={rawKeyword}
           onChange={(e) => setRawKeyword(e.target.value)}
           placeholder="搜索 Skill..."
-          className="h-12 w-full rounded-xl border border-border/70 bg-background pr-4 pl-11 text-sm outline-none transition focus:border-foreground/30 focus:ring-3 focus:ring-ring/40"
+          className="h-12 rounded-xl bg-background pr-4 pl-11 text-sm"
         />
       </div>
 
@@ -167,11 +168,7 @@ export function SkillHubClient() {
         <div className="text-xs font-medium text-muted-foreground">适用 Agent</div>
         <div className="mt-2 flex flex-wrap gap-2">
           {AGENTS.map((item) => (
-            <FilterChip
-              key={item}
-              active={agent === item}
-              onClick={() => handleAgentChange(item)}
-            >
+            <FilterChip key={item} active={agent === item} onClick={() => handleAgentChange(item)}>
               {item}
             </FilterChip>
           ))}
@@ -181,18 +178,8 @@ export function SkillHubClient() {
       <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">
         <span>
           共 <span className="font-medium text-foreground">{filteredSkills.length}</span> 个 Skill
-          {hasMore && (
-            <span className="ml-2">
-              （已加载 <span className="font-medium text-foreground">{displayedSkills.length}</span>）
-            </span>
-          )}
         </span>
-        <span
-          className={cn(
-            "transition-opacity",
-            isFiltering ? "opacity-100" : "opacity-0",
-          )}
-        >
+        <span className={cn('transition-opacity', isFiltering ? 'opacity-100' : 'opacity-0')}>
           正在过滤...
         </span>
       </div>
@@ -202,11 +189,7 @@ export function SkillHubClient() {
           没有匹配的 Skill
         </div>
       ) : (
-        <div
-          ref={innerRef}
-          className="relative mt-4 w-full"
-          style={{ height: totalHeight }}
-        >
+        <div ref={innerRef} className="relative mt-4 w-full" style={{ height: totalHeight }}>
           {virtualItems.map(({ index, style }) => {
             const skill = displayedSkills[index];
             if (!skill) return null;
@@ -229,80 +212,53 @@ export function SkillHubClient() {
       )}
     </section>
   );
-}
+};
 
-function FilterChip({
-  active,
-  children,
-  onClick,
-}: {
+interface FilterChipProps {
   active: boolean;
   children: React.ReactNode;
   onClick: (e: MouseEvent<HTMLButtonElement>) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full px-4 py-1.5 text-sm transition-colors",
-        active
-          ? "bg-foreground text-background"
-          : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-      )}
-    >
-      {children}
-    </button>
-  );
 }
 
-function SkillCard({ skill }: { skill: Skill }) {
-  const Icon = skill.icon;
+const FilterChip = ({ active, children, onClick }: FilterChipProps) => {
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-border/70 bg-card p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <Button
+      type="button"
+      variant={active ? 'default' : 'secondary'}
+      size="sm"
+      onClick={onClick}
+      className="rounded-full px-4"
+    >
+      {children}
+    </Button>
+  );
+};
+
+const SkillCard = ({ skill }: { skill: Skill }) => {
+  return (
+    <Link
+      href={`/skill-hub/${skill.id}`}
+      // 虚拟列表内瞬间会挂载/卸载数十张 Link，默认 prefetch=true 会在滚动过程中触发数百次 RSC 预取。
+      // 这里显式关闭自动预取，改由用户交互（点击/悬浮）触发。
+      prefetch={false}
+      className="group flex h-full flex-col rounded-2xl bg-card p-5 ring-1 ring-foreground/10 transition-all hover:-translate-y-0.5 hover:ring-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+    >
       <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            "inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm",
-            skill.iconClassName,
-          )}
-        >
-          <Icon className="size-5" />
-        </div>
+        <IconBadge icon={skill.icon} className={skill.iconClassName} />
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold tracking-tight">
-            {skill.title}
-          </h3>
-          <p className="mt-1 line-clamp-2 min-h-10 text-xs leading-5 text-muted-foreground">
+          <h3 className="truncate text-base font-semibold tracking-tight">{skill.title}</h3>
+          <p className="mt-1 line-clamp-2 min-h-10 text-sm leading-6 text-muted-foreground">
             {skill.desc}
           </p>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <CategoryTag category={skill.category} />
-        <AgentTag agent={skill.agent} />
+        <Badge variant="secondary">{skill.category}</Badge>
+        <Badge variant="secondary">{skill.agent}</Badge>
       </div>
 
-      <div className="mt-auto pt-4 text-xs text-muted-foreground">
-        {skill.version}
-      </div>
-    </article>
+      <div className="mt-auto pt-4 text-xs text-muted-foreground">{skill.version}</div>
+    </Link>
   );
-}
-
-function CategoryTag({ category }: { category: SkillCategory }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-      {category}
-    </span>
-  );
-}
-
-function AgentTag({ agent }: { agent: SkillAgent }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-      {agent}
-    </span>
-  );
-}
+};
