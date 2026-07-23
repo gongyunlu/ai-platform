@@ -1,0 +1,30 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# 允许执行 postinstall 脚本的依赖白名单（pnpm 11 新 API，取代 onlyBuiltDependencies）。
+allowBuilds:
+  '@swc/core': true
+  '@tailwindcss/oxide': true
+  sharp: true
+  unrs-resolver: true
+
+# pnpm 11 内建 supply-chain 策略会拒绝安装刚发布不足特定时长的包。
+# 下面列出的都是脚手架当前依赖的最新稳定版本，显式豁免以便正常安装。
+minimumReleaseAgeExclude:
+  - '@next/env@16.2.11'
+  - '@next/eslint-plugin-next@16.2.11'
+  - '@next/swc-darwin-arm64@16.2.11'
+  - '@next/swc-darwin-x64@16.2.11'
+  - '@next/swc-linux-arm64-gnu@16.2.11'
+  - '@next/swc-linux-arm64-musl@16.2.11'
+  - '@next/swc-linux-x64-gnu@16.2.11'
+  - '@next/swc-linux-x64-musl@16.2.11'
+  - '@next/swc-win32-arm64-msvc@16.2.11'
+  - '@next/swc-win32-x64-msvc@16.2.11'
+  - eslint-config-next@16.2.11
+  - lint-staged@17.1.1
+  - next@16.2.11
+  - react-dom@19.2.8
+  - react@19.2.8
+  - ts-jest@29.4.12
