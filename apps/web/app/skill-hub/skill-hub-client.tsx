@@ -1,24 +1,17 @@
 'use client';
 
-import {
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-  type MouseEvent,
-} from 'react';
+import { useDeferredValue, useMemo, useRef, useState, useTransition } from 'react';
 import { Search } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { Link } from '@/components/link';
-import { IconBadge } from '@/components/icon-badge';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { LinkCard } from '@/components/link-card';
 import { Input } from '@/components/ui/input';
 import { useFixedSizeVirtualList } from '@/hooks/use-fixed-size-virtual-list';
-import { AGENTS, CATEGORIES, SKILLS, type Skill } from './skills';
+import { useResponsiveColumns } from '@/hooks/use-responsive-columns';
+import { useInfiniteScrollTrigger } from '@/hooks/use-infinite-scroll-trigger';
+import { useLocalPagination } from '@/hooks/use-local-pagination';
+import { AGENTS, CATEGORIES, SKILLS } from './skills';
+import { FilterChip } from '@/components/filter-chip';
 
 type CategoryFilter = (typeof CATEGORIES)[number];
 type AgentFilter = (typeof AGENTS)[number];
@@ -38,10 +31,6 @@ export const SkillHubClient = () => {
   const [rawKeyword, setRawKeyword] = useState('');
   const [category, setCategory] = useState<CategoryFilter>('全部');
   const [agent, setAgent] = useState<AgentFilter>('全部');
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  // 用于探测 filteredSkills 变化 → 在 render 中同步重置分页
-  // （React 官方推荐的"在渲染时更新 state"模式，避免额外的 effect）
-  const [prevFiltered, setPrevFiltered] = useState<Skill[] | null>(null);
   const [, startTransition] = useTransition();
 
   // 输入立即响应；过滤计算滞后执行，避免大数据下卡输入框
@@ -50,18 +39,12 @@ export const SkillHubClient = () => {
 
   const innerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const [columns, setColumns] = useState(3);
 
-  // 列数由内容容器宽度决定
-  useEffect(() => {
-    const el = innerRef.current;
-    if (!el) return;
-    const update = () => setColumns(getColumnsByWidth(el.clientWidth));
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  const columns = useResponsiveColumns({
+    containerRef: innerRef,
+    getColumns: getColumnsByWidth,
+    initialColumns: 3,
+  });
 
   const filteredSkills = useMemo(() => {
     const kw = deferredKeyword.trim().toLowerCase();
@@ -73,19 +56,11 @@ export const SkillHubClient = () => {
     });
   }, [deferredKeyword, category, agent]);
 
-  // 过滤结果变化 → 在渲染中同步重置可见数量到第一页
-  if (filteredSkills !== prevFiltered) {
-    setPrevFiltered(filteredSkills);
-    setVisibleCount(PAGE_SIZE);
-  }
-
-  // 当前实际可见的切片
-  const displayedSkills = useMemo(
-    () => filteredSkills.slice(0, visibleCount),
-    [filteredSkills, visibleCount],
-  );
-
-  const hasMore = visibleCount < filteredSkills.length;
+  const {
+    items: displayedSkills,
+    hasMore,
+    loadMore,
+  } = useLocalPagination({ source: filteredSkills, pageSize: PAGE_SIZE });
 
   const { virtualItems, totalHeight } = useFixedSizeVirtualList({
     itemCount: displayedSkills.length,
@@ -95,35 +70,7 @@ export const SkillHubClient = () => {
     innerRef,
   });
 
-  // 用 ref 存最新 filteredSkills，避免 IntersectionObserver 闭包读到旧引用；
-  // effect 依赖仅锁 hasMore，防止等长切换（例如两组筛选结果都是 200）时观察者不重建。
-  // ref 只能在 effect 里写（React Compiler 规则），不能在 render 中直接赋值。
-  const filteredSkillsRef = useRef(filteredSkills);
-  useEffect(() => {
-    filteredSkillsRef.current = filteredSkills;
-  }, [filteredSkills]);
-
-  // 滚动到"哨兵"时追加下一页；使用 IntersectionObserver 挂在 window 视口上
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasMore) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            startTransition(() => {
-              setVisibleCount((prev) =>
-                Math.min(prev + PAGE_SIZE, filteredSkillsRef.current.length),
-              );
-            });
-          }
-        }
-      },
-      { rootMargin: '600px 0px' }, // 提前 600px 触发，感觉更顺
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore]);
+  useInfiniteScrollTrigger({ sentinelRef, hasMore, onLoadMore: loadMore });
 
   const handleCategoryChange = (value: CategoryFilter) => {
     startTransition(() => setCategory(value));
@@ -195,7 +142,15 @@ export const SkillHubClient = () => {
             if (!skill) return null;
             return (
               <div key={skill.id} style={style} className="p-3">
-                <SkillCard skill={skill} />
+                <LinkCard
+                  href={`/skill-hub/${skill.id}`}
+                  icon={skill.icon}
+                  iconClassName={skill.iconClassName}
+                  title={skill.title}
+                  description={skill.desc}
+                  tags={[skill.category, skill.agent]}
+                  footer={skill.version}
+                />
               </div>
             );
           })}
@@ -211,54 +166,5 @@ export const SkillHubClient = () => {
         </div>
       )}
     </section>
-  );
-};
-
-interface FilterChipProps {
-  active: boolean;
-  children: React.ReactNode;
-  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
-}
-
-const FilterChip = ({ active, children, onClick }: FilterChipProps) => {
-  return (
-    <Button
-      type="button"
-      variant={active ? 'default' : 'secondary'}
-      size="sm"
-      onClick={onClick}
-      className="rounded-full px-4"
-    >
-      {children}
-    </Button>
-  );
-};
-
-const SkillCard = ({ skill }: { skill: Skill }) => {
-  return (
-    <Link
-      href={`/skill-hub/${skill.id}`}
-      // 虚拟列表内瞬间会挂载/卸载数十张 Link，默认 prefetch=true 会在滚动过程中触发数百次 RSC 预取。
-      // 这里显式关闭自动预取，改由用户交互（点击/悬浮）触发。
-      prefetch={false}
-      className="group flex h-full flex-col rounded-2xl bg-card p-5 ring-1 ring-foreground/10 transition-all hover:-translate-y-0.5 hover:ring-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-    >
-      <div className="flex items-start gap-3">
-        <IconBadge icon={skill.icon} className={skill.iconClassName} />
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold tracking-tight">{skill.title}</h3>
-          <p className="mt-1 line-clamp-2 min-h-10 text-sm leading-6 text-muted-foreground">
-            {skill.desc}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Badge variant="secondary">{skill.category}</Badge>
-        <Badge variant="secondary">{skill.agent}</Badge>
-      </div>
-
-      <div className="mt-auto pt-4 text-xs text-muted-foreground">{skill.version}</div>
-    </Link>
   );
 };

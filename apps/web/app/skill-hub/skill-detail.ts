@@ -13,8 +13,12 @@ export interface SkillVersion {
   isCurrent?: boolean;
 }
 
+// 详情页透传给 client component 的 skill 字段。icon 是 lucide 通过 forwardRef 生成的
+// React 组件对象，无法跨 RSC 边界序列化；iconClassName 详情页也未使用，一并排除。
+export type SkillDetailSummary = Omit<Skill, 'icon' | 'iconClassName'>;
+
 export interface SkillDetail {
-  skill: Skill;
+  skill: SkillDetailSummary;
   maintainer: string;
   readme: string;
   files: SkillFile[];
@@ -123,8 +127,16 @@ export const getSkillDetail = (id: string): SkillDetail | null => {
   if (!skill) return null;
 
   const seed = seedFromId(id);
+  const serializableSkill: SkillDetailSummary = {
+    id: skill.id,
+    title: skill.title,
+    desc: skill.desc,
+    category: skill.category,
+    agent: skill.agent,
+    version: skill.version,
+  };
   return {
-    skill,
+    skill: serializableSkill,
     maintainer: MAINTAINERS[seed % MAINTAINERS.length] ?? '张三',
     readme: buildReadme(skill),
     files: buildFiles(skill, seed),
