@@ -1,6 +1,11 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
+
+# shadcn CLI 4.x 依赖的 @modelcontextprotocol/sdk 内部 `import 'zod/v3'`，
+# 但 shadcn 自身把 zod pin 在 v3 导致解析失败；这里强制 SDK 用 zod v4 的兼容子路径。
+overrides:
+  '@modelcontextprotocol/sdk>zod': ^4.0.0
 
 # 允许执行 postinstall 脚本的依赖白名单（pnpm 11 新 API，取代 onlyBuiltDependencies）。
 allowBuilds:
